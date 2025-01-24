@@ -1,6 +1,17 @@
 name: Build Input Leap for Raspberry Pi
 
+# Trigger the workflow on a push to any branch
 on:
+  push:
+    branches:
+      - '**'  # This will trigger the workflow on any branch
+
+  # Optional: You can also add PR event if you want to trigger it for PRs
+  pull_request:
+    branches:
+      - '**'
+
+  # If you still want manual triggering, keep the workflow_dispatch as well
   workflow_dispatch:
     inputs:
       version:
@@ -20,24 +31,64 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          libgl1-mesa-dev \
+          libx11-dev \
+          libxext-dev \
+          libxrender-dev \
+          libssl-dev \
+          libavahi-compat-libdnssd-dev \
+          qtbase5-dev \
+          qtchooser \
+          qt6-base-dev \
+          g++-arm-linux-gnueabihf \
+          gcc-arm-linux-gnueabihf \
+          libtool \
+          pkg-config \
+          python3
+
+    - name: Download Qt6 source
+      run: |
+        # Create a directory to store the Qt6 source code
+        mkdir -p $HOME/qt6
+        cd $HOME/qt6
+        # Clone the Qt6 repository (you can adjust the branch/tag as needed)
+        git clone --branch 6.5 https://code.qt.io/qt/qt5.git qt6
+        cd qt6
+        # Initialize and update the submodules (required for building Qt6)
+        git submodule update --init --recursive
+
+    - name: Build Qt6 from source
+      run: |
+        cd $HOME/qt6/qt6
+        # Create a build directory and configure the build with cmake
+        mkdir build
+        cd build
+        cmake -DCMAKE_INSTALL_PREFIX=$HOME/qt6-install \
+              -DCMAKE_BUILD_TYPE=Release \
+              -G "Unix Makefiles" ..
+        # Compile and install Qt6
+        make -j4  # Adjust based on the number of CPU cores
+        make install
+
     - name: Set up ARM cross-compilation toolchain
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf cmake make
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y qt6-qmake qt6-base-dev libx11-dev libxext-dev libxrender-dev \
-        libssl-dev libavahi-compat-libdnssd-dev
-
     - name: Create build directory
       run: mkdir build
 
-    - name: Run CMake
+    - name: Run CMake with Qt6
       run: |
         cd build
-        cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-arm64.cmake ..
+        cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-arm64.cmake \
+              -DCMAKE_PREFIX_PATH=$HOME/qt6-install/lib/cmake/Qt6 ..
 
     - name: Build Input Leap for Raspberry Pi
       run: |
