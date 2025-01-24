@@ -1,0 +1,51 @@
+name: Build Input Leap for Raspberry Pi
+
+# This section allows you to trigger the workflow manually
+on:
+  workflow_dispatch:  # This event enables manual triggering
+    inputs:
+      version:
+        description: 'Which version to build'
+        required: true
+        default: 'latest'
+      architecture:
+        description: 'Which architecture to target (e.g., arm, arm64)'
+        required: true
+        default: 'arm64'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up ARM cross-compilation toolchain
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf cmake make
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get install -y qt6-qmake qt6-base-dev libx11-dev libxext-dev libxrender-dev \
+        libssl-dev libavahi-compat-libdnssd-dev
+
+    - name: Create build directory
+      run: mkdir build
+
+    - name: Run CMake
+      run: |
+        cd build
+        cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-arm64.cmake ..
+
+    - name: Build Input Leap for Raspberry Pi
+      run: |
+        cd build
+        make -j4  # Adjust based on the number of CPU cores
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: input-leap-raspberry-pi
+        path: build/
