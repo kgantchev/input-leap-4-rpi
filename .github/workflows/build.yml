@@ -43,9 +43,9 @@ jobs:
       run: |
         cd build
         make -j4  # Adjust based on the number of CPU cores
-
+        
     - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
-        name: input-leap-raspberry-pi
-        path: build/
+        name: build-output
+        path: ./output/
