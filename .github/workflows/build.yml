@@ -26,8 +26,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
+    
     - name: Checkout Repository
       uses: actions/checkout@v2
 
@@ -60,34 +60,56 @@ jobs:
         export CC=gcc
         export CXX=g++
 
+    - name: Cache Qt6 source
+      uses: actions/cache@v3
+      with:
+        path: $HOME/qt6
+        key: ${{ runner.os }}-qt6-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-qt6-
+
     - name: Download Qt6 source
       run: |
-        mkdir -p $HOME/qt6
-        cd $HOME/qt6
-        git clone --branch 6.5 https://code.qt.io/qt/qt5.git qt6
-        cd qt6
-        git submodule update --init --recursive
+        if [ ! -d "$HOME/qt6/qt6" ]; then
+          mkdir -p $HOME/qt6
+          cd $HOME/qt6
+          git clone --branch 6.5 https://code.qt.io/qt/qt5.git qt6
+          cd qt6
+          git submodule update --init --recursive
+        fi
 
     - name: Create tmp directory with more space
       run: |
         mkdir -p $HOME/tmp
         export TMPDIR=$HOME/tmp
 
-    - name: Build Qt6 from source
+    - name: Monitor disk space usage before build
+      run: df -h
+
+    - name: Sparse build of Qt6
       run: |
         cd $HOME/qt6/qt6
-        mkdir build
+        mkdir -p build
         cd build
         cmake -DCMAKE_INSTALL_PREFIX=$HOME/qt6-install \
               -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_SKIP_RPATH=YES \
+              -DQT_FEATURE_opengl=OFF \
+              -DQT_FEATURE_webengine=OFF \
+              -DQT_FEATURE_printsupport=OFF \
+              -DQT_FEATURE_sql=OFF \
               -Wno-dev -G "Unix Makefiles" ..
-        make -j2
+        make -j2  # Reduce parallel jobs if necessary
         make install
 
-    - name: Create build directory
+    - name: Clean up Qt6 build files after phase 1
+      run: |
+        rm -rf $HOME/qt6/qt6/build
+
+    - name: Create build directory for Input Leap
       run: mkdir build
 
-    - name: Run CMake with Qt6
+    - name: Run CMake with Qt6 for Input Leap
       run: |
         cd build
         cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-arm64.cmake \
@@ -97,6 +119,14 @@ jobs:
       run: |
         cd build
         make -j2  # Reduce parallel jobs if necessary
+
+    - name: Monitor disk space usage after build
+      run: df -h
+
+    - name: Clean up temporary files
+      run: |
+        sudo rm -rf $HOME/tmp/*
+        sudo rm -rf $HOME/qt6
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
