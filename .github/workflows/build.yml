@@ -40,22 +40,23 @@ jobs:
         sudo apt-get upgrade -y
         
         # Fix repository sources (ensure no outdated/incorrect URLs)
-        sudo sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirror.us.leaseweb.net/g' /etc/apt/sources.list
+        sudo sed -i 's/security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
+        sudo sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
         sudo apt-get update
         
         # Install the required packages
         sudo apt-get install -y \
           build-essential \
           cmake \
-          libgl1-mesa-dev \
-          libx11-dev \
-          libxext-dev \
-          libxrender-dev \
-          libssl-dev \
-          libavahi-compat-libdnssd-dev \
-          qtbase5-dev \
+          libgl1-mesa-dev:arm64 \
+          libx11-dev:arm64 \
+          libxext-dev:arm64 \
+          libxrender-dev:arm64 \
+          libssl-dev:arm64 \
+          libavahi-compat-libdnssd-dev:arm64 \
+          qtbase5-dev:arm64 \
           qtchooser \
-          qt6-base-dev \
+          qt6-base-dev:arm64 \
           g++-aarch64-linux-gnu \
           gcc-aarch64-linux-gnu \
           libtool \
@@ -64,7 +65,7 @@ jobs:
           python3-html5lib \
           clang \
           llvm \
-          libclang-dev
+          libclang-dev:arm64
 
     - name: Set CMake compiler to GCC
       run: |
