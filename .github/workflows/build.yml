@@ -36,7 +36,14 @@ jobs:
     - name: Install dependencies
       run: |
         sudo dpkg --add-architecture arm64  # Add ARM support
+        sudo apt-get update --allow-unauthenticated
+        sudo apt-get upgrade -y
+        
+        # Fix repository sources (ensure no outdated/incorrect URLs)
+        sudo sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirror.us.leaseweb.net/g' /etc/apt/sources.list
         sudo apt-get update
+        
+        # Install the required packages
         sudo apt-get install -y \
           build-essential \
           cmake \
