@@ -53,7 +53,7 @@ jobs:
           python3 \
           clang \
           llvm \
-          libclang-dev  # Installing Clang and LLVM
+          libclang-dev
 
     - name: Set CMake compiler to GCC
       run: |
@@ -68,6 +68,11 @@ jobs:
         cd qt6
         git submodule update --init --recursive
 
+    - name: Create tmp directory with more space
+      run: |
+        mkdir -p $HOME/tmp
+        export TMPDIR=$HOME/tmp
+
     - name: Build Qt6 from source
       run: |
         cd $HOME/qt6/qt6
@@ -76,7 +81,7 @@ jobs:
         cmake -DCMAKE_INSTALL_PREFIX=$HOME/qt6-install \
               -DCMAKE_BUILD_TYPE=Release \
               -Wno-dev -G "Unix Makefiles" ..
-        make -j4
+        make -j2
         make install
 
     - name: Create build directory
@@ -91,7 +96,7 @@ jobs:
     - name: Build Input Leap for Raspberry Pi
       run: |
         cd build
-        make -j4
+        make -j2  # Reduce parallel jobs if necessary
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
