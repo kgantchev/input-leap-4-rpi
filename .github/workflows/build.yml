@@ -28,23 +28,11 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
-    - name: Update apt repositories
+    - name: Update apt repositories and Install dependencies
       run: |
         sudo apt-get update --allow-unauthenticated
         sudo apt-get upgrade -y
-
-    - name: Install dependencies
-      run: |
-        sudo dpkg --add-architecture arm64  # Add ARM support
-        sudo apt-get update --allow-unauthenticated
-        sudo apt-get upgrade -y
-        
-        # Fix repository sources (ensure no outdated/incorrect URLs)
-        sudo sed -i 's/security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
-        sudo sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
-        sudo apt-get update
-        
-        # Install the required packages
+        sudo dpkg --add-architecture arm64
         sudo apt-get install -y \
           build-essential \
           cmake \
@@ -66,11 +54,6 @@ jobs:
           clang \
           llvm \
           libclang-dev:arm64
-
-    - name: Set CMake compiler to GCC
-      run: |
-        export CC=gcc
-        export CXX=g++
 
     - name: Cache Qt6 source
       uses: actions/cache@v3
@@ -94,9 +77,6 @@ jobs:
       run: |
         mkdir -p $HOME/tmp
         export TMPDIR=$HOME/tmp
-
-    - name: Monitor disk space usage before build
-      run: df -h
 
     - name: Sparse build of Qt6
       run: |
@@ -130,10 +110,7 @@ jobs:
     - name: Build Input Leap for Raspberry Pi
       run: |
         cd build
-        make -j2  # Reduce parallel jobs if necessary
-
-    - name: Monitor disk space usage after build
-      run: df -h
+        make -j4
 
     - name: Clean up temporary files
       run: |
