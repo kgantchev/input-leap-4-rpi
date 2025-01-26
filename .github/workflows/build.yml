@@ -33,7 +33,11 @@ jobs:
         sudo apt-get update --allow-unauthenticated
         sudo apt-get upgrade -y
         sudo dpkg --add-architecture arm64
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports $(lsb_release -sc) main universe" | sudo tee -a /etc/apt/sources.list.d/arm64.list
+        # Use the ports repository, which should have ARM64 packages
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports $(lsb_release -sc) main universe restricted multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports $(lsb_release -sc)-security main universe restricted multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports $(lsb_release -sc)-updates main universe restricted multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports $(lsb_release -sc)-backports main universe restricted multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
         sudo apt-get update --allow-unauthenticated
         sudo apt-get install -y \
           build-essential \
