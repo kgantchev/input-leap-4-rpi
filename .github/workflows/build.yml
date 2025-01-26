@@ -33,9 +33,19 @@ jobs:
         sudo apt-get update --allow-unauthenticated
         sudo apt-get upgrade -y
         sudo dpkg --add-architecture arm64
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports $(lsb_release -sc) main universe" | sudo tee -a /etc/apt/sources.list.d/arm64.list
+        sudo apt-get update --allow-unauthenticated
         sudo apt-get install -y \
           build-essential \
           cmake \
+          g++-aarch64-linux-gnu \
+          gcc-aarch64-linux-gnu \
+          libtool \
+          pkg-config \
+          python3 \
+          python3-html5lib \
+          clang \
+          llvm \
           libgl1-mesa-dev:arm64 \
           libx11-dev:arm64 \
           libxext-dev:arm64 \
@@ -45,14 +55,6 @@ jobs:
           qtbase5-dev:arm64 \
           qtchooser \
           qt6-base-dev:arm64 \
-          g++-aarch64-linux-gnu \
-          gcc-aarch64-linux-gnu \
-          libtool \
-          pkg-config \
-          python3 \
-          python3-html5lib \
-          clang \
-          llvm \
           libclang-dev:arm64
 
     - name: Cache Qt6 source
@@ -105,12 +107,14 @@ jobs:
       run: |
         cd build
         cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-arm64.cmake \
-              -DCMAKE_PREFIX_PATH=$HOME/qt6-install/lib/cmake/Qt6 ..
+              -DCMAKE_PREFIX_PATH=$HOME/qt6-install/lib/cmake/Qt6 \
+              -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+              -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ ..
 
     - name: Build Input Leap for Raspberry Pi
       run: |
         cd build
-        make -j4
+        make -j2  # Reduce parallel jobs if necessary
 
     - name: Clean up temporary files
       run: |
